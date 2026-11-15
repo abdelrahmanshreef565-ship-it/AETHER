@@ -1,5 +1,5 @@
 /* AETHER service worker: offline-first app shell. NASA API calls are never cached. */
-const V='aether-v1.2.1',SHELL=['./','index.html','privacy.html','manifest.webmanifest','knowledge.json','feed-snapshot.json','icons/icon.svg','icons/icon-192.png','icons/icon-512.png','icons/maskable-512.png'];
+const V='aether-v1.2.1',SHELL=['./','index.html','privacy.html','manifest.webmanifest','knowledge.json','feed-snapshot.json','icons/icon.svg'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{
