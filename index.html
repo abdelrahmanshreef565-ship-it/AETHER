@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#050914"><meta name="description" content="AETHER: offline-capable astronaut health decision-support prototype with synthetic demo trends and NASA context.">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>AETHER — Astronaut Health Evaluation, Tracking &amp; Early Response</title>
+<style>
+:root{
+  --space:#050914;--navy:#0a1428;--panel:#0e1b33;--panel2:#12233f;--line:#1d3357;
+  --cyan:#38d6f5;--teal:#2de0b4;--amber:#ffb547;--red:#ff6b6b;--violet:#9b8cff;
+  --text:#e6f0ff;--muted:#8aa0c2;--dim:#5b7197;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:radial-gradient(1200px 700px at 80% -10%,#0f2347 0%,transparent 60%),var(--space);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.45;display:flex;overflow:hidden}
+#stars{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.7}
+aside{position:relative;z-index:2;width:236px;flex:none;background:linear-gradient(180deg,#0a1428ee,#060c1cee);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 12px}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 8px 18px}
+.logo{width:36px;height:36px}
+.brand b{letter-spacing:.32em;font-size:17px;display:block}
+.brand small{color:var(--muted);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase}
+nav button{width:100%;display:flex;gap:10px;align-items:center;background:none;border:1px solid transparent;color:var(--muted);padding:10px 12px;border-radius:10px;font:inherit;cursor:pointer;text-align:left;margin-bottom:3px}
+nav button .n{font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+nav button:hover{background:#ffffff08;color:var(--text)}
+nav button.on{background:linear-gradient(90deg,#38d6f51f,transparent);border-color:#38d6f540;color:var(--text)}
+nav button.on .n{color:var(--cyan)}
+.side-foot{margin-top:auto;padding:10px;border:1px solid var(--line);border-radius:12px;font-size:11.5px;color:var(--muted);background:#ffffff05}
+.side-foot b{color:var(--amber)}
+main{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;min-width:0}
+header.top{display:flex;align-items:center;gap:14px;padding:12px 24px;border-bottom:1px solid var(--line);background:#07101fcc;backdrop-filter:blur(8px);flex-wrap:wrap}
+.mission{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.mission b{color:var(--cyan);font-weight:600}
+.grow{flex:1}
+select,.seg button,.btn,input,textarea{font:inherit;color:var(--text)}
+select,input,textarea{background:#0a1730;border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{background:#0a1730;border:0;padding:7px 12px;cursor:pointer;color:var(--muted)}
+.seg button.on{background:var(--cyan);color:#021018;font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;padding:4px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal)}
+.dot.off{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+#view{flex:1;overflow:auto;padding:24px;scroll-behavior:smooth}
+h1{font-size:22px;font-weight:650;letter-spacing:.01em}
+h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:12px}
+.sub{color:var(--muted);margin:4px 0 20px;max-width:820px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.card{background:linear-gradient(180deg,var(--panel),#0b162b);border:1px solid var(--line);border-radius:14px;padding:16px;position:relative}
+.card.alert-amber{border-color:#ffb54766}
+.card.alert-red{border-color:#ff6b6b77}
+.kpi .lbl{color:var(--muted);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase}
+.kpi .val{font-size:30px;font-weight:650;font-family:var(--mono);margin:4px 0}
+.kpi .val small{font-size:12px;color:var(--muted);margin-left:4px;font-weight:400}
+.kpi .dev{font-family:var(--mono);font-size:11.5px}
+.ok{color:var(--teal)}.warn{color:var(--amber)}.bad{color:var(--red)}.cy{color:var(--cyan)}
+.tag{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;padding:2px 7px;border-radius:5px;border:1px solid;margin-left:6px;vertical-align:middle}
+.t-sim{color:var(--violet);border-color:#9b8cff66;background:#9b8cff14}
+.t-live{color:var(--teal);border-color:#2de0b466;background:#2de0b414}
+.t-man{color:var(--cyan);border-color:#38d6f566;background:#38d6f514}
+.t-scn{color:var(--amber);border-color:#ffb54766;background:#ffb54714}
+.t-ref{color:#b7c5e0;border-color:#8aa0c266;background:#8aa0c214}
+.btn{background:#0a1730;border:1px solid var(--line);padding:8px 14px;border-radius:9px;cursor:pointer}
+.btn:hover{border-color:var(--cyan)}
+.btn.pri{background:linear-gradient(90deg,var(--cyan),var(--teal));color:#021018;border:0;font-weight:650}
+.btn.sm{padding:4px 10px;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.insight{border-left:3px solid var(--amber);padding:10px 14px;background:#ffb5470d;border-radius:0 10px 10px 0;margin-bottom:10px}
+.insight.info{border-color:var(--cyan);background:#38d6f50d}
+.insight.red{border-color:var(--red);background:#ff6b6b12}
+.stat{float:right;font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;padding:2px 7px;border-radius:5px;border:1px solid currentColor}
+.insight.ok{border-color:var(--teal);background:#2de0b40d}
+.insight h3{font-size:14px;margin-bottom:4px}
+.insight p{color:#c4d3ee;font-size:13px}
+.insight .meta{margin-top:6px;color:var(--muted);font-size:11.5px;font-family:var(--mono)}
+.chips span{display:inline-block;background:#ffffff0a;border:1px solid var(--line);border-radius:6px;padding:1px 7px;margin:2px 4px 0 0;font-size:11px}
+label{display:block;color:var(--muted);font-size:11.5px;margin-bottom:3px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.form input[type=range]{padding:0;width:100%}
+.hero{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.ring{width:128px;height:128px;flex:none}
+.legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:11.5px;margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+svg text{font-family:var(--mono)}
+.body-wrap{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.body-svg g.part{cursor:pointer}
+.body-svg g.part *{fill:#14305a;stroke:var(--cyan);stroke-width:1.2;transition:.2s}
+.body-svg g.part:hover *,.body-svg g.part.on *{fill:#38d6f533;stroke:var(--teal);filter:drop-shadow(0 0 6px var(--cyan))}
+.task{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer;background:#ffffff04}
+.task.done{opacity:.6;border-color:#2de0b455}
+.task .ck{width:18px;height:18px;border:1.5px solid var(--dim);border-radius:5px;display:grid;place-items:center;font-size:12px}
+.task.done .ck{background:var(--teal);border-color:var(--teal);color:#021018}
+.bar{height:8px;background:#ffffff10;border-radius:5px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--teal))}
+.note{font-size:12px;color:var(--muted);border:1px dashed var(--line);padding:10px 12px;border-radius:10px;margin-top:14px}
+.note b{color:var(--amber)}
+#toast{position:fixed;bottom:20px;right:20px;background:var(--panel2);border:1px solid var(--cyan);padding:10px 16px;border-radius:10px;z-index:9;display:none}
+.scan{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.35;animation:scan 6s linear infinite;pointer-events:none}
+@keyframes scan{from{top:0}to{top:100%}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.pulse{animation:pulse 2s infinite}
+@media (max-width:860px){
+  body{flex-direction:column;overflow:auto}
+  aside{width:100%;flex-direction:row;overflow-x:auto;padding:8px;border-right:0;border-bottom:1px solid var(--line)}
+  .brand,.side-foot{display:none}
+  nav{display:flex;gap:4px}
+  nav button{white-space:nowrap;width:auto}
+  #view{padding:14px}
+  header.top{padding:8px 12px;gap:8px}header.top select{flex:1;min-width:0}.mission{font-size:11px}#spwpill{display:none}
+}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible,.task:focus-visible,.part:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.skip{position:absolute;left:-999px;top:0;background:var(--cyan);color:#021018;padding:8px 14px;z-index:99;border-radius:0 0 8px 0}.skip:focus{left:0}
+#gate{position:fixed;inset:0;background:#030610f2;z-index:50;display:none;align-items:center;justify-content:center;padding:18px;overflow:auto}
+#gate .box{max-width:620px;background:var(--panel);border:1px solid var(--cyan);border-radius:18px;padding:26px;box-shadow:0 0 60px #38d6f533}
+#gate h1{margin-bottom:6px}#gate ul{padding-left:18px;margin:12px 0;color:#c4d3ee;line-height:1.7}
+#gate label{display:flex;gap:10px;align-items:flex-start;color:var(--text);font-size:13px;margin:14px 0;cursor:pointer}
+#gate input{margin-top:3px;width:18px;height:18px}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+.chat #chatlog{height:min(46vh,420px);overflow:auto;display:flex;flex-direction:column;gap:10px;padding:4px}
+.msg{display:flex}.msg.user{justify-content:flex-end}.bub{max-width:86%;padding:10px 14px;border-radius:14px;background:#12233f;border:1px solid var(--line);font-size:13.5px}
+.msg.user .bub{background:linear-gradient(90deg,#38d6f533,#2de0b422);border-color:#38d6f566}.msg.warnmsg .bub{border-color:var(--red);background:#ff6b6b18}
+.srcs{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;font-size:11.5px}.srcs a{color:var(--cyan)}
+details summary{outline:none}
+@media print{
+  body{background:#fff;color:#000;display:block;overflow:visible}
+  aside,header.top,#stars,.noprint{display:none!important}
+  #view{overflow:visible;padding:0}
+  .card{background:#fff;border:1px solid #999;color:#000;break-inside:avoid}
+  .sub,.lbl,label,th,.meta{color:#333!important}
+  .insight{background:#f6f6f6}.insight p{color:#222}
+}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<aside>
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 40 40"><defs><linearGradient id="lg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#38d6f5"/><stop offset="1" stop-color="#2de0b4"/></linearGradient></defs>
+      <circle cx="20" cy="20" r="17" fill="none" stroke="url(#lg)" stroke-width="1.5"/>
+      <ellipse cx="20" cy="20" rx="17" ry="6.5" fill="none" stroke="url(#lg)" stroke-width="1" transform="rotate(-28 20 20)"/>
+      <path d="M8 21h6l2.5-6 4 11 3-8 2 3h6.5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div><b>AETHER</b><small>Astronaut Health Intelligence</small></div>
+  </div>
+  <nav id="nav"></nav>
+  <div class="side-foot"><b>Decision support only.</b><br>AETHER does not diagnose. Medical decisions belong to the crew surgeon / flight medical team.</div>
+</aside>
+<main>
+  <header class="top">
+    <div class="mission">MISSION <b id="mday">—</b> · <span id="clock"></span></div>
+    <span class="pill"><span class="dot" id="netdot"></span><span id="nettxt">LINK NOMINAL</span></span>
+    <span class="pill" id="spwpill">SPACE WX: …</span>
+    <div class="grow"></div>
+    <select id="envSel" aria-label="Mission environment"></select>
+    <select id="crewSel" aria-label="Crew member"></select>
+    <div class="seg" id="roleSeg"><button data-r="crew" class="on">Crew</button><button data-r="medical">Medical</button></div>
+  </header>
+  <div id="view" role="main" tabindex="-1"></div>
+</main>
+<a class="skip" href="#view">Skip to content</a>
+<div id="gate" role="dialog" aria-modal="true" aria-labelledby="gt"><div class="box">
+ <h1 id="gt">Before you start</h1><p class="sub" style="margin-bottom:0">AETHER helps you track and understand your health indicators on a mission.</p>
+ <ul><li><b>It is decision support, not a medical device</b> and does not diagnose or treat.</li>
+ <li>In an emergency, follow your mission medical procedures and contact the flight surgeon immediately.</li>
+ <li>Reference ranges are generic. Your flight surgeon's limits take priority.</li>
+ <li>Your data stays <b>on this device</b>. Nothing is uploaded unless you export it.</li>
+ <li>Crew data shown at first launch is <b>simulated demo data</b>.</li></ul>
+ <label><input type="checkbox" id="gateck"> I understand and accept these limits.</label>
+ <button class="btn pri" id="gatebtn" disabled>Enter AETHER</button></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* ========================= UTIL ========================= */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+const sd=a=>{const m=mean(a);return Math.sqrt(mean(a.map(x=>(x-m)**2)))||1e-6};
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function gauss(r){return Math.sqrt(-2*Math.log(r()+1e-9))*Math.cos(2*Math.PI*r())}
+function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',2600)}
+function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
+
+/* ========================= DATA MODEL ========================= */
+/* Human metrics. bad: 'both' = deviation either way matters; 'low' = low is worse; 'high' = high is worse */
+const METRICS=[
+ {k:'hr',  label:'Resting heart rate',unit:'bpm', dec:0,bad:'both',base:62,  s:2.5, color:'#ff8fa3'},
+ {k:'sbp', label:'Systolic BP',       unit:'mmHg',dec:0,bad:'both',base:114, s:4,   color:'#ffb547'},
+ {k:'sleep',label:'Sleep',            unit:'h',   dec:1,bad:'low', base:7.0, s:.45, color:'#9b8cff'},
+ {k:'temp',label:'Body temperature',  unit:'°C',  dec:1,bad:'both',base:36.7,s:.12, color:'#38d6f5'},
+ {k:'mood',label:'Mood / readiness',  unit:'/5',  dec:1,bad:'low', base:4.1, s:.35, color:'#2de0b4'},
+ {k:'glu', label:'Fasting blood glucose',unit:'mg/dL',dec:0,bad:'both',base:88,s:3.5,color:'#ffd166'},
+ {k:'act', label:'Exercise',          unit:'min', dec:0,bad:'low', base:120, s:12,  color:'#7ee081'}
+];
+/* General adult reference ranges for at-a-glance colour. green = inside ok; amber = between; red = outside red.
+   Mission-specific limits must be set by the flight surgeon; these are generic placeholders, not clinical advice. */
+const REF={hr:{ok:[50,100],red:[40,120]},sbp:{ok:[90,129],red:[85,139]},sleep:{ok:[6.5,10],red:[4.5,12]},temp:{ok:[36.0,37.5],red:[35.0,38.0]},mood:{ok:[3,5],red:[1.5,5]},glu:{ok:[70,99],red:[60,125]},act:{ok:[90,300],red:[30,400]}};
+function absSev(k,v){const r=REF[k];if(v>=r.ok[0]&&v<=r.ok[1])return 0;if(v>=r.red[0]&&v<=r.red[1])return 1;return 2}
+const SEVTXT=['NORMAL','ATTENTION','CONTACT SURGEON'],SEVCLS=['ok','warn','bad'];
+const ENVPROF={
+ spacecraft:{n:'Spacecraft (Orion-type capsule)',h:'Highest radiation exposure outside shielding, tiny volume, limited exercise gear, short comms delay.',emph:['Radiation','Isolation & confinement','Cabin CO₂'],cad:'Vitals twice daily · glucose weekly · CO₂ checks each shift'},
+ station:{n:'Space station (LEO)',h:'Microgravity, 16 sunrises/day, daily exercise hardware, near-real-time ground medical support.',emph:['Altered gravity','Circadian disruption','Bone & muscle loss'],cad:'Vitals daily · exercise log daily · glucose weekly'},
+ rover:{n:'Pressurized rover',h:'Partial gravity, dust, vibration, long traverses, limited medical kit.',emph:['Dust & hostile environment','Fatigue','Hydration'],cad:'Vitals each traverse day · hydration log · sleep log'},
+ base:{n:'Lunar / Mars base',h:'Partial gravity, long comms delay, radiation, isolation, high crew autonomy.',emph:['Distance from Earth','Isolation & confinement','Radiation','Partial gravity'],cad:'Full panel daily · weekly glucose · delay-tolerant ground sync'}
+};
+const ENV=[
+ {k:'co2',label:'Cabin ppCO₂',unit:'mmHg',dec:1,base:3.0,s:.25,color:'#ffb547'},
+ {k:'rad',label:'Radiation dose rate',unit:'µSv/h',dec:1,base:15,s:1.6,color:'#ff6b6b'},
+ {k:'cabT',label:'Cabin temperature',unit:'°C',dec:1,base:22.5,s:.35,color:'#38d6f5'},
+ {k:'rh',label:'Relative humidity',unit:'%',dec:0,base:44,s:3,color:'#9b8cff'}
+];
+const CREW=[
+ {id:'C1',name:'CDR Rivera',role:'Commander',seed:11},
+ {id:'C2',name:'PLT Okafor',role:'Pilot',seed:23},
+ {id:'C3',name:'MS Tanaka',role:'Mission Specialist',seed:37},
+ {id:'C4',name:'MS Haddad',role:'Mission Specialist',seed:51}
+];
+const SIM_DAYS=14, BASELINE_DAYS=7;
+const M=Object.fromEntries(METRICS.map(m=>[m.k,m])), E=Object.fromEntries(ENV.map(m=>[m.k,m]));
+
+function genSim(){
+  const out={crew:{},env:[]};
+  const re=rng(9001);
+  for(let d=1;d<=SIM_DAYS;d++){
+    const o={day:d,src:'SIM'};
+    ENV.forEach(e=>o[e.k]=+(e.base+gauss(re)*e.s).toFixed(2));
+    out.env.push(o);
+  }
+  CREW.forEach((c,ci)=>{
+    const r=rng(c.seed*7919);
+    const off={hr:gauss(r)*2,sbp:gauss(r)*4,sleep:gauss(r)*.2,temp:gauss(r)*.05,mood:gauss(r)*.2,glu:gauss(r)*2,act:gauss(r)*8};
+    out.crew[c.id]=[];
+    for(let d=1;d<=SIM_DAYS;d++){
+      const o={day:d,src:'SIM'};
+      METRICS.forEach(m=>o[m.k]=+(m.base+off[m.k]+gauss(r)*m.s).toFixed(2));
+      out.crew[c.id].push(o);
+    }
+  });
+  return out;
+}
+const SIM=genSim();
+
+/* ========================= STATE ========================= */
+const APP_VERSION='1.2.1';
+const KEY='aether.v1';
+let S=load();
+S.llm=S.llm||{provider:'off',endpoint:'',key:'',model:'',share:false};
+function load(){
+  try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v===1)return s}catch(e){}
+  return {v:1,llm:{provider:'off',endpoint:'',key:'',model:'',share:false},feed:null,crew:'C1',role:'crew',entries:[],envEntries:[],acks:{},audit:[],tasks:{},xp:{},queue:0};
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function audit(action,detail){S.audit.unshift({t:new Date().toISOString(),role:S.role,crew:S.crew,action,detail});S.audit=S.audit.slice(0,200);save()}
+function series(cid){ // simulated + manual/scenario, ordered by day
+  const base=SIM.crew[cid].slice();
+  S.entries.filter(e=>e.crew===cid).forEach(e=>base.push({...e.vals,day:e.day,src:e.src}));
+  return base;
+}
+function envSeries(){
+  const base=SIM.env.slice();
+  S.envEntries.forEach(e=>base.push({...e.vals,day:e.day,src:e.src}));
+  return base;
+}
+function missionDay(){ // latest logged day across data
+  return Math.max(SIM_DAYS,...S.entries.map(e=>e.day),...S.envEntries.map(e=>e.day));
+}
+function baselineStats(cid,key){
+  const v=SIM.crew[cid].slice(0,BASELINE_DAYS).map(r=>r[key]);
+  return {m:mean(v),s:Math.max(sd(v),M[key]?M[key].s*.6:.1)};
+}
+function zOf(cid,key,val){const b=baselineStats(cid,key);return (val-b.m)/b.s}
+function envBase(key){const v=SIM.env.slice(0,BASELINE_DAYS).map(r=>r[key]);return {m:mean(v),s:Math.max(sd(v),E[key].s*.6)}}
+
+/* ========================= SPACE WEATHER (NASA DONKI, live when reachable) ========================= */
+const SW={status:'pending',flares:[],sep:[],fetchedAt:null,err:null};
+async function fetchSW(){
+  const end=new Date(),start=new Date(Date.now()-30*864e5);
+  const f=d=>d.toISOString().slice(0,10);
+  const key=(S.apiKey&&S.apiKey.trim())||'DEMO_KEY';
+  const q=t=>`https://api.nasa.gov/DONKI/${t}?startDate=${f(start)}&endDate=${f(end)}&api_key=${key}`;
+  try{
+    const ctl=new AbortController();setTimeout(()=>ctl.abort(),9000);
+    const [fl,sp]=await Promise.all([fetch(q('FLR'),{signal:ctl.signal}),fetch(q('SEP'),{signal:ctl.signal})]);
+    if(!fl.ok||!sp.ok)throw new Error('HTTP '+fl.status+'/'+sp.status);
+    SW.flares=(await fl.json())||[];SW.sep=(await sp.json())||[];
+    SW.status='live';SW.fetchedAt=new Date();SW.err=null;
+  }catch(e){SW.status='offline';SW.err=String(e.message||e)}
+  renderSW();if(S.view==='env'||S.view==='overview'||S.view==='intel')render();
+}
+function strongFlares(){return (SW.flares||[]).filter(x=>/^[MX]/i.test(x.classType||''))}
+function renderSW(){
+  const p=$('#spwpill');
+  if(SW.status==='live'){const n=strongFlares().length+(SW.sep||[]).length;p.innerHTML=`<span class="dot"></span> SPACE WX · LIVE NASA DONKI · ${n} notable (30d)`}
+  else if(SW.status==='offline'){p.innerHTML=`<span class="dot off"></span> SPACE WX · NASA feed unreachable → no live data`}
+  else p.textContent='SPACE WX: connecting to NASA DONKI…';
+}
+
+/* ========================= INTELLIGENCE ENGINE ========================= */
+/* Mission Context Intelligence: synthetic demo baseline + multi-signal concordance + environment context + evidence. */
+const EVID={
+ sleep:{t:'NASA HRP risk: performance decrements from sleep loss & circadian desynchronization',u:'https://www.nasa.gov/hrp/risks/'},
+ psych:{t:'NASA HRP hazard: isolation & confinement / behavioral health',u:'https://www.nasa.gov/hrp/hazards/'},
+ rad:{t:'NASA HRP hazard: space radiation',u:'https://www.nasa.gov/hrp/hazards/'},
+ co2:{t:'NASA HRP: hostile/closed environment — cabin atmosphere (CO₂) effects',u:'https://www.nasa.gov/hrp/hazards/'},
+ cv:{t:'NASA HRP risks: cardiovascular adaptation & fluid shift in microgravity',u:'https://www.nasa.gov/hrp/risks/'},
+ exer:{t:'NASA HRP: exercise countermeasures against muscle & bone loss',u:'https://www.nasa.gov/hrp/hazards/'},
+ nutr:{t:'NASA HRP risks: inadequate nutrition & metabolic change in spaceflight',u:'https://www.nasa.gov/hrp/risks/'}
+};
+function analyze(cid){
+  const s=series(cid), last=s[s.length-1], prev=s.slice(-4,-1);
+  const envS=envSeries(), env=envS[envS.length-1];
+  const sig=[]; // deviating signals
+  METRICS.forEach(m=>{
+    const z=zOf(cid,m.k,last[m.k]);
+    const bad=(m.bad==='both'&&Math.abs(z)>=1.5)||(m.bad==='low'&&z<=-1.5)||(m.bad==='high'&&z>=1.5);
+    if(bad)sig.push({k:m.k,z,val:last[m.k]});
+  });
+  const envFlags=[];
+  const zc=(env.co2-envBase('co2').m)/envBase('co2').s, zr=(env.rad-envBase('rad').m)/envBase('rad').s;
+  if(zc>=1.8)envFlags.push({k:'co2',z:zc});
+  if(zr>=1.8)envFlags.push({k:'rad',z:zr});
+  const spe=(SW.status==='live')&&((SW.sep||[]).length>0);
+  const out=[];
+  const has=k=>sig.find(x=>x.k===k);
+  const crit=METRICS.filter(m=>absSev(m.k,last[m.k])===2);
+  const amb=METRICS.filter(m=>absSev(m.k,last[m.k])===1);
+  if(crit.length){
+    out.push({id:`${cid}-${last.day}-crit`,sev:'red',title:'Reading outside general safe range: '+crit.map(m=>m.label).join(', '),
+      body:crit.map(m=>`${m.label} ${last[m.k].toFixed(m.dec)} ${m.unit} (general reference ${REF[m.k].ok[0]}–${REF[m.k].ok[1]})`).join('; ')+'. A single out-of-range reading may be a measurement error: repeat it correctly before acting.',
+      signals:crit.map(m=>m.k),conf:'high (value) / unknown (cause)',evid:[...new Set(crit.map(m=>({sleep:EVID.sleep,mood:EVID.psych,glu:EVID.nutr,act:EVID.exer}[m.k]||EVID.cv)))],
+      action:'Do now: repeat the measurement after 5–10 min rest. If still out of range, or if you feel unwell, contact the flight surgeon.',
+      limit:'General adult ranges, not individualised mission limits.'});
+  }
+  if(amb.some(m=>m.k==='glu')){
+    out.push({id:`${cid}-${last.day}-glu`,sev:'amber',title:'Fasting glucose outside usual range',
+      body:`Glucose ${last.glu} mg/dL (synthetic demo baseline ${baselineStats(cid,'glu').m.toFixed(0)}). Stress, sleep loss, diet change and reduced exercise can all move glucose in spaceflight.`,
+      signals:['glu'],conf:'low–moderate',evid:[EVID.nutr],
+      action:'Suggest: confirm fasting state, retest, review meals and exercise; report persistent values to flight surgeon.',limit:'Needs a glucometer in the mission medical kit; one value is not a diagnosis.'});
+  }
+  // sleep debt over trailing 3 days
+  const sleep3=mean([...prev,last].slice(-3).map(r=>r.sleep));
+  const sleepDebt=zOf(cid,'sleep',sleep3)<=-1.2;
+  if(has('sleep')||sleepDebt){
+    const others=sig.filter(x=>['mood','hr','act'].includes(x.k));
+    const conf=others.length>=2?'moderate':others.length===1?'low–moderate':'low';
+    out.push({id:`${cid}-${last.day}-sleep`,sev:others.length>=2?'amber':'info',
+      title:'Sleep below synthetic demo baseline'+(others.length?` with ${others.length} concurrent change${others.length>1?'s':''}`:''),
+      body:`Sleep averaged ${sleep3.toFixed(1)} h over the last 3 days vs the synthetic demo baseline of ${baselineStats(cid,'sleep').m.toFixed(1)} h.`+
+        (others.length?` Concurrent shifts: ${others.map(o=>M[o.k].label.toLowerCase()+' ('+(o.z>0?'+':'')+o.z.toFixed(1)+'σ)').join(', ')}.`:'')+
+        (envFlags.find(f=>f.k==='co2')?' Cabin CO₂ is also elevated, a plausible contributing context.':''),
+      signals:[...sig.map(x=>x.k),...envFlags.map(x=>x.k)],conf,evid:[EVID.sleep],
+      action:'Suggest: review sleep schedule/lighting; flag to flight surgeon if pattern persists >3 days.',
+      limit:'Self-reported or wearable sleep is an estimate; no clinical sleep staging.'});
+  }
+  if(has('mood')&&(has('sleep')||has('act'))){
+    out.push({id:`${cid}-${last.day}-psych`,sev:'amber',title:'Readiness / mood decline with reduced sleep or activity',
+      body:`Mood-readiness is ${last.mood.toFixed(1)}/5 (${zOf(cid,'mood',last.mood).toFixed(1)}σ vs the synthetic demo baseline) alongside lower sleep or exercise. Isolation, workload and schedule strain are known contributors during long missions.`,
+      signals:sig.map(x=>x.k),conf:'low–moderate',evid:[EVID.psych,EVID.sleep],
+      action:'Suggest: private conference with behavioral health support; offer rest block.',
+      limit:'Mood is a subjective 1–5 score. Not a mental-health screening instrument.'});
+  }
+  if((has('hr')||has('sbp'))&&(has('temp')||has('hr')&&has('sbp'))){
+    out.push({id:`${cid}-${last.day}-cv`,sev:'amber',title:'Concurrent cardiovascular / thermal change',
+      body:`Heart rate ${last.hr} bpm and systolic BP ${last.sbp} mmHg deviate from the synthetic demo baseline together with body temperature ${last.temp} °C. Concordant changes are more informative than a single reading, but have many benign causes (exertion, fluid shift, measurement error).`,
+      signals:sig.map(x=>x.k),conf:'moderate',evid:[EVID.cv],
+      action:'Suggest: repeat measurement at rest; medical team review.',
+      limit:'Consumer-grade sensing assumed; confirm with clinical-grade device.'});
+  }
+  if(envFlags.find(f=>f.k==='co2')){
+    const hs=sig.filter(x=>x.k==='hr'||x.k==='sbp'||x.k==='sleep'||x.k==='mood');
+    out.push({id:`${cid}-${last.day}-co2`,sev:hs.length?'amber':'info',title:'Elevated cabin CO₂ context',
+      body:`Cabin ppCO₂ ${env.co2.toFixed(1)} mmHg is ${zc.toFixed(1)}σ above this mission's synthetic demo baseline.`+(hs.length?` ${hs.length} crew indicator(s) also off-baseline, so the environment is worth checking before attributing changes to the individual.`:' No concurrent crew change detected.'),
+      signals:['co2',...hs.map(x=>x.k)],conf:hs.length?'low–moderate':'low',evid:[EVID.co2],
+      action:'Suggest: ECLSS/scrubber check; compare across all crew.',limit:'Single cabin sensor; local CO₂ pockets near crew may differ.'});
+  }
+  if(envFlags.find(f=>f.k==='rad')||spe){
+    out.push({id:`${cid}-${last.day}-rad`,sev:'info',title:'Radiation context',
+      body:(envFlags.find(f=>f.k==='rad')?`Dose rate ${env.rad.toFixed(1)} µSv/h is ${zr.toFixed(1)}σ above the synthetic demo baseline. `:'')+
+        (spe?`NASA DONKI lists ${SW.sep.length} solar energetic particle event(s) in the last 30 days. `:'')+
+        'Radiation effects are cumulative and probabilistic; no acute symptom is inferred from a single reading.',
+      signals:['rad'],conf:'context only',evid:[EVID.rad],
+      action:'Suggest: log time-in-shielded-area; follow mission radiation protocol.',
+      limit:'Sim dose rate unless live RadLab data is connected; DONKI is Earth-side space weather, not on-board dose.'});
+  }
+  if(!out.length)out.push({id:`${cid}-${last.day}-ok`,sev:'ok',title:'All indicators within synthetic demo baseline',
+    body:'No concordant deviations detected today. Keep logging: trend value comes from consistency.',signals:[],conf:'—',evid:[],action:'Continue routine countermeasures.',limit:'Absence of alerts is not a clinical clearance.'});
+  const level=out.some(o=>o.sev==='red')?'ESCALATE':out.some(o=>o.sev==='amber')?'REVIEW':out.some(o=>o.sev==='info')?'WATCH':'NOMINAL';
+  out.sort((a,b)=>({red:0,amber:1,info:2,ok:3}[a.sev]-{red:0,amber:1,info:2,ok:3}[b.sev]));
+  return {last,sig,envFlags,insights:out,level,env,crit,amb};
+}
+function statusClass(l){return l==='ESCALATE'?'bad':l==='REVIEW'?'warn':l==='WATCH'?'cy':'ok'}
+function metricStatus(cid,k,val){const z=zOf(cid,k,val),m=M[k];const off=(m.bad==='both'&&Math.abs(z)>=1.5)||(m.bad==='low'&&z<=-1.5)||(m.bad==='high'&&z>=1.5);return Math.max(absSev(k,val),off?1:0)}
+function srcTag(src){return src==='SIM'?'<span class="tag t-sim">SIMULATED</span>':src==='MANUAL'?'<span class="tag t-man">MANUAL ENTRY</span>':src==='SCENARIO'?'<span class="tag t-scn">DEMO SCENARIO</span>':'<span class="tag t-live">LIVE NASA</span>'}
+
+/* ========================= CHARTS (SVG) ========================= */
+function lineChart(vals,{base,s,color,w=420,h=120,days,unit='',dec=1,showAxis=true}){
+  const lo=Math.min(...vals,base-2.4*s),hi=Math.max(...vals,base+2.4*s),pad=6,L=34;
+  const X=i=>L+(w-L-pad)*(vals.length<2?0:i/(vals.length-1)), Y=v=>pad+(h-2*pad-12)*(1-(v-lo)/(hi-lo||1));
+  const band=`<rect x="${L}" y="${Y(base+1.5*s)}" width="${w-L-pad}" height="${Math.max(2,Y(base-1.5*s)-Y(base+1.5*s))}" fill="${color}" opacity=".10"/>`;
+  const bl=`<line x1="${L}" x2="${w-pad}" y1="${Y(base)}" y2="${Y(base)}" stroke="${color}" stroke-dasharray="3 4" opacity=".5"/>`;
+  const pts=vals.map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+  const area=`${L},${h-12} ${pts} ${X(vals.length-1)},${h-12}`;
+  const gid='g'+Math.random().toString(36).slice(2,8);
+  const dots=vals.map((v,i)=>{const z=(v-base)/s;const out=Math.abs(z)>=1.5;return `<circle cx="${X(i)}" cy="${Y(v)}" r="${i===vals.length-1?4:out?3:2}" fill="${out?'#ffb547':color}"><title>Day ${days?days[i]:i+1}: ${v.toFixed(dec)} ${unit}</title></circle>`}).join('');
+  const ax=showAxis?`<text x="2" y="${Y(hi)+8}" font-size="9" fill="#5b7197">${hi.toFixed(dec)}</text><text x="2" y="${Y(lo)}" font-size="9" fill="#5b7197">${lo.toFixed(dec)}</text>
+   <text x="${L}" y="${h-1}" font-size="9" fill="#5b7197">D${days?days[0]:1}</text><text x="${w-pad}" y="${h-1}" font-size="9" fill="#5b7197" text-anchor="end">D${days?days[days.length-1]:vals.length}</text>`:'';
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" role="img"><defs><linearGradient id="${gid}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".35"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>
+   ${band}${bl}<polygon points="${area}" fill="url(#${gid})"/><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>${dots}${ax}</svg>`;
+}
+function ring(pct,color,label){
+  const r=52,c=2*Math.PI*r;
+  return `<svg class="ring" viewBox="0 0 128 128"><circle cx="64" cy="64" r="${r}" fill="none" stroke="#ffffff12" stroke-width="10"/>
+  <circle cx="64" cy="64" r="${r}" fill="none" stroke="${color}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${c*pct} ${c}" transform="rotate(-90 64 64)"/>
+  <text x="64" y="62" text-anchor="middle" font-size="22" fill="#e6f0ff" font-weight="700">${Math.round(pct*100)}</text>
+  <text x="64" y="80" text-anchor="middle" font-size="9" fill="#8aa0c2" letter-spacing="1.5">${label}</text></svg>`;
+}
+
+/* ========================= VIEWS ========================= */
+const VIEWS=[
+ {id:'overview',n:'01',label:'Mission Overview'},
+ {id:'health',n:'02',label:'Crew Health'},
+ {id:'env',n:'03',label:'Space Environment'},
+ {id:'intel',n:'04',label:'Health Intelligence'},
+ {id:'assistant',n:'x',label:'AETHER Assistant'},
+ {id:'updates',n:'x',label:'NASA Updates'},
+ {id:'guide',n:'05',label:'Measurement Guide'},
+ {id:'body',n:'06',label:'Body & Hazards'},
+ {id:'routine',n:'07',label:'Mission Routine'},
+ {id:'med',n:'08',label:'Medical Operations'},
+ {id:'about',n:'09',label:'Sources & Ethics'},
+ {id:'settings',n:'10',label:'Settings & Privacy'}
+];
+function readinessScore(a){ // 0..1 : fraction of indicators in-baseline, penalised by concordant flags
+  const n=METRICS.length, bad=a.sig.length;
+  return Math.max(0,1-bad/n-(a.envFlags.length*.05));
+}
+function vOverview(){
+  const c=CREW.find(x=>x.id===S.crew), a=analyze(S.crew), L=a.last, s=series(S.crew);
+  const score=readinessScore(a);
+  const kpis=METRICS.map(m=>{
+    const z=zOf(S.crew,m.k,L[m.k]),b=baselineStats(S.crew,m.k);
+    const st=metricStatus(S.crew,m.k,L[m.k]);
+    return `<div class="card kpi ${st==2?'alert-red':st==1?'alert-amber':''}"><div class="lbl">${m.label}<span class="stat ${SEVCLS[st]}">${SEVTXT[st]}</span></div>
+      <div class="val ${SEVCLS[st]}">${L[m.k].toFixed(m.dec)}<small>${m.unit}</small></div>
+      <div class="dev">${z>=0?'+':''}${z.toFixed(1)}σ vs demo baseline ${b.m.toFixed(m.dec)} · ref ${REF[m.k].ok[0]}–${REF[m.k].ok[1]}</div>
+      ${lineChart(s.slice(-10).map(r=>r[m.k]),{base:b.m,s:b.s,color:m.color,w:260,h:54,showAxis:false,unit:m.unit,dec:m.dec,days:s.slice(-10).map(r=>r.day)})}</div>`}).join('');
+  const crewRows=CREW.map(x=>{const y=analyze(x.id);return `<tr style="cursor:pointer" data-crew="${x.id}"><td><b>${esc(x.name)}</b><br><span style="color:var(--muted);font-size:11px">${x.role}</span></td><td class="${statusClass(y.level)}">${y.level}</td><td>${y.sig.length}</td><td>${y.insights.filter(i=>i.sev!=='ok').length}</td></tr>`}).join('');
+  return `<h1>Mission Overview <span class="tag t-sim">SIMULATED CREW DATA</span></h1>
+  <p class="sub">Prototype trend dashboard for long-duration mission scenarios. Crew readings are simulated or manually entered; the displayed baseline is generated demo data, not a real astronaut baseline. NASA DONKI supplies public space-weather context only.</p>
+  <div class="grid g3" style="margin-bottom:14px">
+    <div class="card hero"><div>${ring(score,score>.8?'#2de0b4':score>.55?'#ffb547':'#ff6b6b','TREND ALIGNMENT')}</div>
+      <div><h2>${esc(c.name)}</h2><div class="${statusClass(a.level)}" style="font-size:22px;font-weight:700;font-family:var(--mono)">${a.level}</div>
+      <div style="color:var(--muted);font-size:12px">Mission Day ${L.day} · ${srcTag(L.src)}</div>
+      <div style="color:var(--muted);font-size:12px;margin-top:6px">${a.sig.length} off-baseline indicator(s)</div><div class="meta">Illustrative trend score only — not medical readiness.</div></div></div>
+    <div class="card"><h2>Crew status</h2><table><tr><th>Crew</th><th>Status</th><th>Off</th><th>Insights</th></tr>${crewRows}</table></div>
+    <div class="card"><h2>Quick actions</h2>
+      <div style="display:grid;gap:8px"><button class="btn pri" data-go="health">Log daily check-in</button>
+      <button class="btn" data-go="intel">Read today's intelligence</button>
+      <button class="btn" data-go="routine">Mission routine &amp; streak</button>
+      <button class="btn" id="scn">▶ Run demo scenario (sleep loss + high CO₂)</button></div></div>
+  </div>
+  <div class="grid g2" style="margin-bottom:14px">
+   <div class="card"><h2>Environment profile</h2><b>${ENVPROF[S.env].n}</b><p style="color:#c4d3ee;margin:6px 0">${ENVPROF[S.env].h}</p>
+    <div class="chips">${ENVPROF[S.env].emph.map(x=>`<span>${x}</span>`).join('')}</div>
+    <p style="color:var(--muted);font-size:12px;margin-top:8px">Measurement cadence: ${ENVPROF[S.env].cad}</p></div>
+   <div class="card"><h2>What to do now</h2>${a.insights.filter(i=>i.sev!=='ok'&&i.sev!=='info').slice(0,3).map(i=>`<p style="margin-bottom:6px"><span class="${i.sev==='red'?'bad':'warn'}">●</span> ${esc(i.action)}</p>`).join('')||'<p class="ok">● No action needed. Keep your routine and log tomorrow\'s check-in.</p>'}
+    <button class="btn sm" data-go="guide" style="margin-top:6px">Open measurement guide →</button></div></div>
+  <h2>Today's indicators</h2><div class="grid g3">${kpis}</div>
+  <h2 style="margin-top:20px">Top insight</h2>${insightHTML(a.insights[0],true)}`;
+}
+function insightHTML(i,brief){
+  const ev=(i.evid||[]).map(e=>`<a style="color:var(--cyan)" target="_blank" rel="noopener" href="${e.u}">${esc(e.t)}</a>`).join('<br>');
+  return `<div class="insight ${i.sev}"><h3>${esc(i.title)}</h3><p>${esc(i.body)}</p>
+   ${brief?'':`<p style="margin-top:6px"><b>${esc(i.action)}</b></p>`}
+   <div class="meta">Confidence: ${i.conf} · Signals: ${(i.signals||[]).join(', ')||'none'}</div>
+   ${brief?'':`<div class="meta" style="margin-top:4px">Limits: ${esc(i.limit)}</div><div class="meta" style="margin-top:4px">${ev||''}</div>`}</div>`;
+}
+function vHealth(){
+  const s=series(S.crew), L=s[s.length-1], day=missionDay()+1;
+  const form=METRICS.map(m=>{
+    const step=m.k==='mood'?.5:m.k==='temp'?.1:m.dec?0.1:1;
+    const bounds={hr:[30,200],sbp:[60,220],sleep:[0,16],temp:[33,41],mood:[1,5],glu:[30,400],act:[0,400]}[m.k];
+    return `<div><label>${m.label} (${m.unit})</label><input type="number" name="${m.k}" step="${step}" min="${bounds[0]}" max="${bounds[1]}" value="${L[m.k].toFixed(m.dec)}" required></div>`}).join('');
+  const charts=METRICS.map(m=>{const b=baselineStats(S.crew,m.k);
+    return `<div class="card"><h2>${m.label}</h2>${lineChart(s.map(r=>r[m.k]),{base:b.m,s:b.s,color:m.color,days:s.map(r=>r.day),unit:m.unit,dec:m.dec})}
+    <div class="legend"><span><i style="background:${m.color};opacity:.25"></i>synthetic demo baseline ±1.5σ</span><span><i style="background:#ffb547"></i>outside band</span></div></div>`}).join('');
+  return `<h1>Crew Health — ${esc(CREW.find(x=>x.id===S.crew).name)}</h1>
+  <p class="sub">Each reading is compared with a <b>synthetic demonstration baseline</b> generated for this sample crew. It is not a personal clinical baseline. Shaded band = demo baseline ±1.5σ.</p>
+  <div class="card" style="margin-bottom:14px"><h2>Daily check-in · Mission Day ${day} ${srcTag('MANUAL')}</h2>
+   <form id="ci"><div class="form">${form}</div>
+   <div style="margin-top:10px"><label>Notes (stored locally)</label><textarea name="note" rows="2" style="width:100%" placeholder="Optional: headache, workload, unusual event…"></textarea></div>
+   <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" type="submit">Save check-in</button>
+   <button type="button" class="btn" id="exJSON">Export JSON</button><button type="button" class="btn" id="exCSV">Export CSV</button></div></form>
+   <div class="note"><b>Stored on this device only.</b> Works offline; entries are saved locally when offline. This prototype does not upload or synchronize health records to a server.</div></div>
+  <div class="grid g2">${charts}</div>`;
+}
+function vEnv(){
+  const e=envSeries(), last=e[e.length-1];
+  const cards=ENV.map(m=>{const b=envBase(m.k);return `<div class="card"><h2>${m.label} ${srcTag(last.src)}</h2><div class="kpi"><div class="val" style="font-size:26px">${last[m.k].toFixed(m.dec)}<small>${m.unit}</small></div></div>
+   ${lineChart(e.map(r=>r[m.k]),{base:b.m,s:b.s,color:m.color,days:e.map(r=>r.day),unit:m.unit,dec:m.dec,h:100})}</div>`}).join('');
+  let sw='';
+  if(SW.status==='live'){
+    const fl=strongFlares().slice(-6).reverse(),sp=(SW.sep||[]).slice(-6).reverse();
+    sw=`<div class="card"><h2>NASA DONKI space weather · last 30 days <span class="tag t-live">LIVE NASA</span></h2>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:8px">Fetched ${SW.fetchedAt.toLocaleTimeString()} · ${SW.flares.length} flares total, ${strongFlares().length} M/X-class · ${SW.sep.length} SEP events</p>
+    <table><tr><th>Type</th><th>Class / ID</th><th>Time (UTC)</th></tr>
+    ${fl.map(f=>`<tr><td>Solar flare</td><td>${esc(f.classType||'?')}</td><td>${esc(f.peakTime||f.beginTime||'')}</td></tr>`).join('')}
+    ${sp.map(f=>`<tr><td>SEP event</td><td>${esc(f.sepID||'')}</td><td>${esc(f.eventTime||'')}</td></tr>`).join('')}
+    ${!fl.length&&!sp.length?'<tr><td colspan=3>No M/X flares or SEP events in window.</td></tr>':''}</table>
+    <p class="note">DONKI describes space weather near Earth/Sun. It is context for radiation risk, <b>not</b> the on-board dose measurement.</p></div>`;
+  }else{
+    sw=`<div class="card alert-amber"><h2>NASA DONKI space weather</h2><p>${SW.status==='pending'?'Connecting…':'Live feed unavailable ('+esc(SW.err||'offline')+'). AETHER shows no space-weather data rather than inventing it.'}</p>
+    <div style="margin-top:10px"><button class="btn" id="retrySW">Retry NASA feed</button></div></div>`;
+  }
+  return `<h1>Space Environment</h1><p class="sub">Cabin atmosphere and radiation context. Cabin values are simulated for the demo; the space-weather panel is real NASA data when the browser can reach api.nasa.gov.</p>
+  <div class="grid g2" style="margin-bottom:14px">${cards}</div>${sw}`;
+}
+function vIntel(){
+  const a=analyze(S.crew);
+  return `<h1>Health Intelligence <span class="tag t-ref">MISSION CONTEXT INTELLIGENCE</span></h1>
+  <p class="sub">Instead of firing an alarm on one reading, AETHER looks for <b>concordant change</b> against a synthetic demo baseline, adds <b>environment and space-weather context</b>, and shows <b>evidence, confidence and limits</b> for every insight.</p>
+  <div class="grid g4" style="margin-bottom:14px">
+    ${[['1','Demo baseline','Synthetic sample data — not individual astronaut data'],['2','Concordance','≥2 related signals raise confidence'],['3','Context','CO₂, radiation, NASA DONKI'],['4','Evidence','NASA HRP hazard / risk links']].map(x=>`<div class="card"><div class="cy" style="font-family:var(--mono)">STEP ${x[0]}</div><b>${x[1]}</b><div style="color:var(--muted);font-size:12px;margin-top:4px">${x[2]}</div></div>`).join('')}</div>
+  <h2>Insights for ${esc(CREW.find(x=>x.id===S.crew).name)} — Day ${a.last.day} ${srcTag(a.last.src)}</h2>
+  ${a.insights.map(i=>insightHTML(i)).join('')}
+  <div class="note"><b>Not a diagnostic tool.</b> Rules are transparent thresholds (|z| ≥ 1.5 vs synthetic demo baseline), not a validated clinical algorithm. All suggestions defer to the crew surgeon.</div>`;
+}
+const GUIDE={
+ hr:{how:'Sit still for 5 minutes. Use the chest strap/wrist sensor, or count the radial pulse for 30 s and double it. Measure at the same time each day, before exercise.',why:'Heart rate is the fastest window into cardiovascular load, stress, fluid status and recovery.',haz:'Altered gravity & fluid shift change how hard the heart works; sleep loss and stress raise resting rate.',act:'Repeat after 10 min rest. Persistently above 100 or below 45 bpm, or with chest pain, dizziness or fainting → contact the flight surgeon.',do:'Hydrate, reduce workload, take a rest block, review caffeine.'},
+ sbp:{how:'Seated, back supported, cuff on bare upper arm at heart level. Take two readings one minute apart and log the average.',why:'Blood pressure reflects blood volume and vascular adaptation, both altered in microgravity.',haz:'Fluid shift, reduced blood volume, stress and confinement; radiation is studied for long-term cardiovascular effects.',act:'Repeat once. Readings ≥140 or ≤85 mmHg systolic, or with headache, vision change or faintness → contact the flight surgeon.',do:'Hydration, salt/nutrition review, exercise adherence, rest.'},
+ glu:{how:'Fasting (before first meal), clean fingertip, use the medical-kit glucometer per procedure. Log mg/dL.',why:'Stress, sleep loss, diet change and reduced activity can shift metabolism; nutrition is a named spaceflight risk.',haz:'Isolation & confinement stress, food system limits, reduced loading.',act:'Fasting ≥126 or <70 mg/dL on repeat → contact the flight surgeon.',do:'Balanced meals, consistent timing, exercise, avoid skipped meals.'},
+ temp:{how:'Use the kit thermometer, same site and time daily, away from exercise or hot hardware.',why:'Body heat does not convect away in microgravity; fever or overheating can be missed without measurement.',haz:'Hostile closed environment (cabin temperature/humidity), infection and immune changes.',act:'≥38.0 °C, chills, or persistent low reading → contact the flight surgeon.',do:'Check cabin temperature, hydrate, rest.'},
+ sleep:{how:'Log sleep and wake times, or sync a wearable. Note light, noise and interruptions.',why:'Sleep loss lowers performance and increases error risk; it is the earliest trackable behavioral-health signal.',haz:'Circadian disruption (many sunrises/day), noise, workload, isolation.',act:'Under 6 h for 3 nights, or under 4.5 h once → report; discuss schedule change.',do:'Protect an 8 h window, dim lights, consistent routine, limit late caffeine.'},
+ mood:{how:'Rate readiness 1–5 each evening and add one line of context (workload, contact, conflict).',why:'Isolation and confinement affect behavioral health; self-reports catch drift before it affects the mission.',haz:'Isolation & confinement, distance from Earth.',act:'1–2 on any day, or 3 days of decline → private conference with ground behavioral-health support.',do:'Social contact, rest block, exercise, outdoors-view time at a window.'},
+ act:{how:'Log minutes of resistive plus aerobic exercise from the exercise device summary.',why:'Exercise is the main countermeasure against bone, muscle and cardiovascular deconditioning.',haz:'Altered gravity (unloading of bones and muscles).',act:'Under 60 min/day on several days → adjust schedule; flag to ground exercise team.',do:'Break into two sessions, keep resistive work, protect time slots.'}
+};
+function vGuide(){
+  const s=series(S.crew),L=s[s.length-1];
+  return `<h1>Measurement Guide</h1><p class="sub">Plain-language instructions for every indicator: how to measure it, why it matters in space, what a result means, and what to do. Colors: <span class="ok">green normal</span> · <span class="warn">amber attention</span> · <span class="bad">red contact flight surgeon</span>.</p>
+  <div class="grid g2">${METRICS.map(m=>{const g=GUIDE[m.k],st=metricStatus(S.crew,m.k,L[m.k]);return `<div class="card ${st==2?'alert-red':st==1?'alert-amber':''}">
+   <h2>${m.label}<span class="stat ${SEVCLS[st]}">${SEVTXT[st]}</span></h2>
+   <p><b>Your latest:</b> <span class="${SEVCLS[st]}" style="font-family:var(--mono)">${L[m.k].toFixed(m.dec)} ${m.unit}</span> <span style="color:var(--muted)">· general reference ${REF[m.k].ok[0]}–${REF[m.k].ok[1]} ${m.unit}</span></p>
+   <p style="margin-top:8px"><b>How to measure.</b> ${g.how}</p><p style="margin-top:6px"><b>Why it matters.</b> ${g.why}</p>
+   <p style="margin-top:6px"><b>Spaceflight hazard.</b> ${g.haz}</p><p style="margin-top:6px"><b>When to act.</b> ${g.act}</p><p style="margin-top:6px"><b>What helps.</b> ${g.do}</p></div>`}).join('')}</div>
+  <div class="note"><b>Generic reference ranges.</b> Shown for orientation only. The flight surgeon sets individual mission limits.</div>`;
+}
+const BODY={
+ brain:{t:'Brain & eyes',h:'Fluid shift & SANS',d:'In microgravity, body fluids shift headward. Some long-duration astronauts develop Spaceflight Associated Neuro-ocular Syndrome (SANS): optic disc swelling and changes in vision. Monitored with eye imaging and ultrasound on the ground and in orbit.',m:['Headache / vision change reports','Intracranial-pressure research'],hz:'Distance from Earth · Altered gravity',link:'https://www.nasa.gov/hrp/hazards/'},
+ heart:{t:'Heart & circulation',h:'Cardiovascular adaptation',d:'Without gravity the heart does less work against hydrostatic pressure. Blood volume falls and orthostatic intolerance can occur after return. Resting HR, BP and exercise tolerance trends are standard monitoring signals.',m:['Resting HR','Blood pressure','Exercise load'],hz:'Altered gravity',link:'https://www.nasa.gov/hrp/risks/'},
+ lungs:{t:'Cabin air & lungs',h:'Hostile / closed environment',d:'Crew depend on a closed atmosphere. Elevated CO₂ and trace contaminants can cause headaches, drowsiness and reduced performance. Cabin CO₂ is monitored continuously and correlated with symptoms.',m:['Cabin ppCO₂','Humidity','Temperature'],hz:'Hostile / closed environments',link:'https://www.nasa.gov/hrp/hazards/'},
+ bone:{t:'Bone & muscle',h:'Skeletal & muscle loss',d:'Reduced mechanical loading leads to bone-density loss and muscle atrophy. Daily resistive and aerobic exercise (about two hours) is the main countermeasure, so exercise adherence is tracked in AETHER.',m:['Exercise minutes','Adherence streak'],hz:'Altered gravity',link:'https://www.nasa.gov/hrp/hazards/'},
+ dna:{t:'Cells & DNA',h:'Space radiation',d:'Galactic cosmic rays and solar particle events add cumulative dose that terrestrial crews never face; risks include cancer, central-nervous-system and degenerative effects. Mission dose is tracked and managed with shielding and protocols.',m:['Dose rate (µSv/h)','Cumulative exposure','Space-weather alerts'],hz:'Space radiation',link:'https://www.nasa.gov/hrp/hazards/'},
+ psyche:{t:'Mind & sleep',h:'Isolation, confinement & circadian disruption',d:'Small crews, confinement, workload and a 16-sunrise-per-day light cycle strain sleep and mood. Sleep loss reduces performance and is among the most trackable early signals.',m:['Sleep hours','Mood/readiness','Workload notes'],hz:'Isolation & confinement',link:'https://www.nasa.gov/hrp/risks/'}
+};
+function vBody(){
+  const part=(id,x,y,shape)=>`<g class="part" data-p="${id}" tabindex="0" role="button" aria-label="${BODY[id].t}">${shape}</g>`;
+  return `<h1>Body &amp; Hazards Explorer</h1><p class="sub">Tap a region to see the spaceflight hazard behind it and which AETHER signal watches it. Content summarizes NASA Human Research Program hazard categories.</p>
+  <div class="body-wrap"><div class="card"><svg class="body-svg" viewBox="0 0 220 420" width="240" role="img" aria-label="Interactive body">
+   ${part('brain','','', '<ellipse cx="110" cy="42" rx="26" ry="30"/>')}
+   ${part('psyche','','','<path d="M96 28q14-12 28 0" fill="none"/><circle cx="102" cy="44" r="3"/><circle cx="118" cy="44" r="3"/>')}
+   ${part('lungs','','','<path d="M82 100q-18 10-16 50 18 8 30-4V104z"/><path d="M138 100q18 10 16 50-18 8-30-4V104z"/>')}
+   ${part('heart','','','<path d="M110 126c-14-14-4-30 0-22 4-8 14 8 0 22z" transform="translate(0 4) scale(1.1) translate(-10 -8)"/>')}
+   ${part('bone','','','<rect x="62" y="190" width="12" height="190" rx="6"/><rect x="146" y="190" width="12" height="190" rx="6"/><rect x="98" y="250" width="10" height="130" rx="5"/><rect x="112" y="250" width="10" height="130" rx="5"/>')}
+   ${part('dna','','','<ellipse cx="110" cy="195" rx="26" ry="30"/>')}
+  </svg></div>
+  <div class="card" style="flex:1;min-width:300px" id="bodyInfo"><h2>Select a region</h2><p style="color:var(--muted)">Head: brain, mind, eyes · Chest: heart, lungs · Abdomen: cell-level radiation · Limbs: bone & muscle.</p></div></div>`;
+}
+const TASKS=[
+ {id:'ex',t:'Resistive + aerobic exercise (≈2 h)',xp:30,why:'Counters bone and muscle loss'},
+ {id:'ci',t:'Complete daily health check-in',xp:20,why:'Keeps baseline comparison valid'},
+ {id:'sl',t:'Protect 8 h sleep window',xp:25,why:'Sleep is the earliest performance signal'},
+ {id:'hy',t:'Hydration & nutrition log',xp:10,why:'Fluid shifts alter intake and thirst cues'},
+ {id:'ra',t:'Radiation shelter drill / dosimeter check',xp:15,why:'Procedural readiness for SPE'},
+ {id:'ps',t:'Social contact: call with family/ground',xp:15,why:'Isolation countermeasure'}
+];
+function vRoutine(){
+  const k=S.crew+':'+missionDay(), done=S.tasks[k]||{};
+  const total=TASKS.reduce((a,t)=>a+t.xp,0), got=TASKS.filter(t=>done[t.id]).reduce((a,t)=>a+t.xp,0);
+  const xp=S.xp[S.crew]||0, lvl=Math.floor(xp/150)+1;
+  return `<h1>Mission Routine</h1><p class="sub">Preventive-health tasks tied to the hazards they counter. Gamification here is meant to support adherence, not to replace medical guidance.</p>
+  <div class="grid g2"><div class="card"><h2>Today's tasks · Day ${missionDay()}</h2>
+   ${TASKS.map(t=>`<div class="task ${done[t.id]?'done':''}" data-task="${t.id}" role="checkbox" aria-checked="${done[t.id]?'true':'false'}" tabindex="0"><div class="ck">${done[t.id]?'✓':''}</div><div style="flex:1"><b>${t.t}</b><div style="color:var(--muted);font-size:11.5px">${t.why}</div></div><span class="cy" style="font-family:var(--mono)">+${t.xp}</span></div>`).join('')}
+   <div class="bar"><i style="width:${got/total*100}%"></i></div><div style="color:var(--muted);font-size:12px;margin-top:6px">${got}/${total} points today</div></div>
+   <div class="card"><h2>Crew progress</h2><div class="hero">${ring(Math.min(1,(xp%150)/150),'#38d6f5','LEVEL '+lvl)}<div><div class="kpi"><div class="val">${xp}<small>XP</small></div></div><div style="color:var(--muted);font-size:12px">${150-(xp%150)} XP to next level</div></div></div>
+   <div class="note">Streak and XP are stored locally for each crew member on this device.</div></div></div>`;
+}
+function vMed(){
+  const isMed=S.role==='medical';
+  const alerts=[];
+  CREW.forEach(c=>{const a=analyze(c.id);a.insights.filter(i=>i.sev!=='ok').forEach(i=>alerts.push({c,i,day:a.last.day}))});
+  const rows=alerts.map(({c,i,day})=>{const ack=S.acks[i.id];return `<tr><td>${esc(c.name)}</td><td>D${day}</td><td class="${i.sev==='red'?'bad':i.sev==='amber'?'warn':'cy'}">${i.sev==='red'?'ESCALATE':i.sev==='amber'?'REVIEW':'WATCH'}</td><td>${esc(i.title)}</td><td>${i.conf}</td>
+    <td>${ack?`<span class="ok">Ack'd ${esc(ack.by)}</span>`:isMed?`<button class="btn sm" data-ack="${i.id}">Acknowledge</button>`:'<span style="color:var(--dim)">Medical role only</span>'}</td></tr>`}).join('');
+  const aud=S.audit.slice(0,12).map(a=>`<tr><td style="font-family:var(--mono)">${a.t.slice(11,19)}</td><td>${a.role}</td><td>${esc(a.action)}</td><td style="color:var(--muted)">${esc(a.detail||'')}</td></tr>`).join('');
+  return `<h1>Medical Operations ${isMed?'':'<span class="tag t-scn">VIEW ONLY — switch to Medical role to act</span>'}</h1>
+  <p class="sub">Review queue, source provenance and audit trail for the flight medical team. Every acknowledgement and export is logged.</p>
+  <div class="card" style="margin-bottom:14px"><h2>Review queue</h2>${rows?`<table><tr><th>Crew</th><th>Day</th><th>Level</th><th>Insight</th><th>Confidence</th><th>Action</th></tr>${rows}</table>`:'<p class="ok">No open review items.</p>'}</div>
+  <div class="grid g2"><div class="card"><h2>Data provenance</h2><table>
+    <tr><td>Crew vitals</td><td>${srcTag('SIM')} ${srcTag('MANUAL')}</td></tr>
+    <tr><td>Cabin environment</td><td>${srcTag('SIM')}</td></tr>
+    <tr><td>Space weather</td><td>${SW.status==='live'?srcTag('LIVE'):'<span class="warn">feed unavailable</span>'}</td></tr>
+    <tr><td>Entries created offline (local only)</td><td>${S.queue} entries</td></tr></table>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap" class="noprint"><button class="btn" id="exJSON">Export JSON</button><button class="btn" id="exCSV">Export CSV</button><button class="btn pri" id="exPDF">Print / PDF report</button></div></div>
+   <div class="card"><h2>Audit log</h2><table><tr><th>UTC</th><th>Role</th><th>Action</th><th>Detail</th></tr>${aud||'<tr><td colspan=4 style="color:var(--muted)">No events yet.</td></tr>'}</table></div></div>`;
+}
+function vSettings(){
+  return `<h1>Settings &amp; Privacy</h1><p class="sub">AETHER v${APP_VERSION} · works offline · no account, no tracking, no ads.</p>
+  <div class="grid g2">
+  <div class="card"><h2>Privacy</h2><ul style="padding-left:18px;color:#c4d3ee;line-height:1.8"><li>All health entries are stored only in this device's browser storage.</li><li>NASA DONKI, NASA Technical Reports Server and NASA Image Library are contacted for public space-weather, research and media data; these requests do not include crew health records.</li><li>If you explicitly enable the optional external AI assistant and submit a prompt, the prompt and the selected conversation context are sent to the provider you configure. Do not enter sensitive personal or medical information.</li><li>Any NASA API key and optional AI-provider key you save are stored in this browser's local storage. Use this only on a device you control.</li><li>Export files are created on this device; you decide where they go.</li><li>Deleting data below removes it permanently.</li></ul>
+   <div style="margin-top:12px"><a class="cy" href="privacy.html" target="_blank" rel="noopener">Full privacy policy ↗</a></div></div>
+  <div class="card"><h2>NASA API key</h2><p style="color:var(--muted);font-size:12.5px;margin-bottom:8px">NASA's shared DEMO_KEY is rate-limited. You can add your own NASA API key. It is stored locally in this browser; do not use a shared device.</p>
+   <input id="apikey" style="width:100%" placeholder="DEMO_KEY" value="${esc(S.apiKey||'')}" autocomplete="off" spellcheck="false">
+   <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" id="saveKey">Save &amp; refresh feed</button></div></div>
+  <div class="card"><h2>Your data</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="exJSON">Export JSON</button><button class="btn" id="exCSV">Export CSV</button><button class="btn" id="reconsent">Show safety notice</button><button class="btn" id="wipe" style="border-color:var(--red);color:var(--red)">Delete all local data</button></div>
+   <p class="note">${S.entries.length} manual entries · ${S.audit.length} audit events stored locally.</p></div>
+  <div class="card"><h2>About</h2><p style="color:#c4d3ee">AETHER was created for the NASA Space Apps Challenge 2026. It is not affiliated with or endorsed by NASA or any space agency. NASA data credited to NASA Open APIs.</p>
+   <p class="note"><b>Medical role has no login in this build.</b> In an operational deployment it must be tied to authenticated flight-surgeon accounts.</p></div>
+  </div>`;
+}
+function vAbout(){
+  return `<h1>Sources, Method &amp; Ethics</h1><p class="sub">What is real, what is simulated, and what AETHER will never claim.</p>
+  <div class="grid g2">
+   <div class="card"><h2>Data honesty</h2>
+    <p>${srcTag('SIM')} Crew vitals and cabin values are generated with a seeded model for demonstration. They are <b>not</b> data from real astronauts.</p><br>
+    <p>${srcTag('LIVE')} Space-weather events come from the NASA DONKI API when your browser can reach it. If not, the app says so and shows nothing instead.</p><br>
+    <p>${srcTag('MANUAL')} Check-in entries are typed by the user and stored in this browser only.</p></div>
+   <div class="card"><h2>NASA &amp; partner references</h2><ul style="padding-left:18px;color:#c4d3ee;line-height:1.9">
+    <li><a class="cy" target="_blank" rel="noopener" href="https://www.nasa.gov/hrp/hazards/">NASA HRP — Hazards of human spaceflight</a></li>
+    <li><a class="cy" target="_blank" rel="noopener" href="https://www.nasa.gov/hrp/risks/">NASA HRP — Risks of human spaceflight</a></li>
+    <li><a class="cy" target="_blank" rel="noopener" href="https://api.nasa.gov/">NASA Open APIs (DONKI)</a></li>
+    <li><a class="cy" target="_blank" rel="noopener" href="https://osdr.nasa.gov/">NASA Open Science Data Repository (OSDR)</a></li>
+    <li>CSA — Monitoring radiation for astronaut health</li></ul></div>
+   <div class="card"><h2>Limitations</h2><ul style="padding-left:18px;color:#c4d3ee;line-height:1.8">
+    <li>Prototype: not a medical device, not validated clinically.</li><li>Thresholds are transparent statistics, not diagnostic criteria.</li>
+    <li>The comparison baseline is synthetic demo data; real use would require validated pre-flight baselines.</li><li>No on-board device integration yet.</li></ul></div>
+   <div class="card"><h2>Roadmap</h2><ul style="padding-left:18px;color:#c4d3ee;line-height:1.8">
+    <li>Ingest OSDR human-study datasets and RadLab dose data.</li><li>Wearable/ECLSS sensor adapters.</li><li>On-board sync with delay-tolerant networking.</li><li>Clinician-validated alert rules.</li></ul></div>
+  </div>`;
+}
+
+
+/* ========================= KNOWLEDGE BASE + ASSISTANT ========================= */
+const HRP='https://www.nasa.gov/hrp/hazards/',HRPR='https://www.nasa.gov/hrp/risks/',CSA='https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp';
+const KB=[
+ {id:'haz5',title:'The five hazards of human spaceflight',tags:'hazards five nasa hrp radiation isolation confinement distance gravity hostile closed environment',text:'NASA\'s Human Research Program groups spaceflight risks into five hazards: (1) space radiation, (2) isolation and confinement, (3) distance from Earth, (4) gravity fields (microgravity or partial gravity) and (5) hostile, closed environments. AETHER links every indicator to one or more of these hazards.',src:HRP},
+ {id:'rad',title:'Space radiation',tags:'radiation cosmic rays solar particle event sep dose cancer shielding dosimeter',text:'Beyond Earth\'s magnetic field, crews receive galactic cosmic rays and, sometimes, solar particle events. Dose accumulates over the mission and raises long-term risks (cancer, central-nervous-system and degenerative effects). It has no immediate feeling, so it is managed with dosimeters, shielding, storm shelters and mission planning rather than symptoms. A single high reading is context, not a diagnosis.',src:CSA},
+ {id:'spe',title:'Solar storm / radiation shelter',tags:'solar storm flare spe sep shelter alert donkI space weather protocol',text:'When space weather forecasts a solar particle event, crews follow mission procedure: move to the best-shielded area, log time in shelter and dosimeter readings, and report to ground. AETHER shows NASA DONKI flare and SEP events as context only; it does not measure your on-board dose.',src:'https://api.nasa.gov/'},
+ {id:'iso',title:'Isolation and confinement',tags:'isolation confinement behavioral mental stress mood loneliness conflict team crew',text:'Small crews, limited privacy, workload and monotony can affect mood, cohesion and cognition. Early signs are lower mood/readiness scores, poorer sleep, irritability and withdrawal. Countermeasures: regular private contact with family and ground support, structured rest, exercise, and talking with behavioral-health support early.',src:HRP},
+ {id:'dist',title:'Distance from Earth',tags:'distance communication delay autonomy mars moon evacuation medical kit',text:'The farther the mission, the longer the communication delay (up to about 20+ minutes one way to Mars) and the harder an emergency return. Crew must assess and treat more on their own, which is why AETHER gives plain-language guidance and works offline.',src:HRP},
+ {id:'grav',title:'Altered gravity: what it does to the body',tags:'gravity microgravity fluid shift bone muscle cardiovascular balance vestibular',text:'Without gravity, fluids shift toward the head, muscles and bones unload, the heart does less work and balance systems adapt. This drives bone and muscle loss, cardiovascular deconditioning, facial puffiness, and possible eye changes. Daily exercise is the main countermeasure.',src:HRP},
+ {id:'hostile',title:'Hostile, closed environment',tags:'hostile closed environment cabin air co2 carbon dioxide humidity temperature noise microbes contamination',text:'Crews live in a sealed system: air, water, temperature, noise and microbes all matter. Raised cabin CO2 can cause headaches, drowsiness and poorer performance. If CO2 rises and several crew feel off together, check the environment before assuming it is an individual medical problem.',src:HRP},
+ {id:'sans',title:'SANS: eye and vision changes (Spaceflight Associated Neuro-ocular Syndrome)',tags:'sans eye vision optic disc head fluid headache blurred intracranial',text:'Some long-duration astronauts develop optic disc swelling, flattened eyeballs and shifts in vision, linked to headward fluid shift. Report any new blurred vision, near-vision change, persistent headache or flashes to the flight surgeon; eye imaging and ultrasound on board help track it.',src:HRPR},
+ {id:'bone',title:'Bone loss',tags:'bone density osteoporosis calcium vitamin d kidney stones skeleton hip',text:'Unloaded bones lose mineral, in weight-bearing bones roughly around 1% or more per month on long missions without countermeasures. Resistive exercise, adequate calcium/vitamin D intake and hydration help. Bone loss also raises blood calcium and kidney-stone risk, so fluids matter.',src:HRP},
+ {id:'muscle',title:'Muscle loss and exercise countermeasures',tags:'muscle atrophy exercise resistive aerobic treadmill strength workout countermeasure minutes',text:'NASA crews on the ISS exercise about two hours a day (resistive plus aerobic) to protect muscle, bone and heart. In AETHER, falling exercise minutes with other signs (lower mood, poor sleep) is flagged. If equipment is limited, split the time into two sessions rather than skipping.',src:HRP},
+ {id:'cardio',title:'Cardiovascular changes',tags:'heart cardiovascular blood pressure orthostatic faint dizzy arrhythmia volume fluid',text:'Blood volume falls and the heart remodels in microgravity; after return or partial gravity, standing can cause dizziness or fainting (orthostatic intolerance). Watch resting heart rate and blood pressure trends against your own baseline; sudden chest pain, fainting or an irregular racing heartbeat is an emergency.',src:HRPR},
+ {id:'immune',title:'Immune system changes',tags:'immune infection virus herpes reactivation illness sick fever allergy rash',text:'Stress, radiation, sleep disruption and microgravity alter immune function; dormant viruses can reactivate and rashes or minor infections can be more frequent. Persistent fever, new rash, infection signs or slow-healing wounds should be reported.',src:HRPR},
+ {id:'sleep',title:'Sleep and circadian rhythm',tags:'sleep circadian insomnia tired fatigue light melatonin schedule hours nap rest',text:'On the ISS crews see about 16 sunrises a day, plus noise and workload, so sleep is often short. Aim for about 8 hours in a protected window, keep consistent timing, dim cabin lights before sleep and limit late caffeine. Under 6 hours for 3 nights, or under 4.5 hours once, is worth reporting. Poor sleep affects mood, judgement and error rates.',src:HRPR},
+ {id:'nutr',title:'Nutrition, hydration and glucose',tags:'nutrition food diet hydration water glucose sugar blood sugar diabetes weight appetite calories',text:'Space food systems are limited and appetite and thirst cues change, so under-eating and dehydration are common risks. Keep regular meals, fluids and protein. Fasting glucose is normally about 70 to 99 mg/dL; repeated fasting values of 126 or higher, or below 70 with symptoms, should go to the flight surgeon.',src:HRPR},
+ {id:'hr',title:'Heart rate: how to measure and interpret',tags:'heart rate pulse bpm measure resting hr tachycardia bradycardia',text:'Measure after 5 minutes of rest, at the same time each day, with the sensor or by counting the pulse for 30 seconds and doubling it. A typical adult resting range is about 50 to 100 bpm. Look for your own trend: a rise of several bpm with poor sleep or stress is common; persistent values above 100 or below 45, or symptoms, need review.',src:HRPR},
+ {id:'bp',title:'Blood pressure: how to measure and interpret',tags:'blood pressure bp systolic diastolic cuff hypertension hypotension',text:'Sit with back supported, cuff at heart level, take two readings one minute apart and record the average. A general reference for systolic pressure is about 90 to 129 mmHg. Readings of 140 or higher, or 85 or lower, repeated, or with headache, vision change or faintness, should be escalated.',src:HRPR},
+ {id:'temp',title:'Body temperature',tags:'temperature fever thermometer hot cold chills core',text:'Take it at the same site and time daily away from exercise. Typical range is about 36.0 to 37.5 C; 38.0 C or higher, chills or a persistent low reading needs review. In microgravity heat is not carried away by convection, so overheating can build up quietly.',src:HRPR},
+ {id:'mood',title:'Mood and behavioral health',tags:'mood depression anxiety stress mental readiness behavioral health psychological counselor',text:'Rate readiness 1 to 5 each evening and add one line on what affected it. One low day is normal; three days of decline, a score of 1 to 2, or loss of interest, hopelessness or sleep collapse deserves a private conversation with ground behavioral-health support. Asking early is a strength, not a risk to the mission.',src:HRP},
+ {id:'surg',title:'When to contact the flight surgeon',tags:'contact surgeon doctor when escalate urgent emergency threshold call',text:'Contact the flight surgeon right away for chest pain, trouble breathing, fainting, severe headache or vision loss, confusion, severe injury or bleeding, or thoughts of self-harm. Contact within the day for red AETHER readings that stay out of range after a repeat, fever, new rash, persistent insomnia, or mood decline over several days. Follow your mission medical procedures first.',src:HRPR},
+ {id:'aether',title:'How AETHER works',tags:'aether app how works baseline insights z score color status confidence limits offline privacy',text:'AETHER compares each reading with generic reference ranges and with the synthetic first-7-day demo baseline, then looks for related changes together (for example low sleep plus low mood plus higher CO2) rather than reacting to a single number. Every insight shows confidence, limits and NASA references. It works offline and stores data only on your device. It is decision support, not a diagnosis.',src:'privacy.html'},
+ {id:'limits',title:'Limits of this assistant',tags:'limits accuracy medical advice diagnosis safe trust ai chatbot',text:'This assistant retrieves guidance from a NASA-referenced knowledge base and recent NASA publications. It cannot examine you, may be wrong or out of date, and never replaces your flight surgeon or mission procedures.',src:'privacy.html'}
+];
+let KB_EXTRA=[];
+const STOP=new Set('the and for are but not you your with what when how why does that this have has can should from into about there their will was were been being its our out any all too very who whom which where while than then them they she her his him just also more most some such only own same than use used using get got make made need needs want like'.split(' '));
+const SYN={pulse:'heart',heartbeat:'heart',bp:'blood pressure',sugar:'glucose',glycemia:'glucose',tired:'sleep',insomnia:'sleep',cosmic:'radiation',sun:'solar',doctor:'surgeon',depressed:'mood',sad:'mood',anxious:'mood',anxiety:'mood',workout:'exercise',gym:'exercise',eyes:'eye',sick:'immune',ill:'immune',co2:'carbon',air:'cabin'};
+function tok(t){return t.toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(w=>w.length>1&&!STOP.has(w)).flatMap(w=>SYN[w]?[w,...SYN[w].split(' ')]:[w])}
+function allDocs(){const d=[...KB,...KB_EXTRA];(S.feed&&S.feed.items||[]).forEach(i=>d.push({id:'f'+i.url,title:i.title,tags:'nasa latest research new update recent publication '+i.k,text:(i.summary||'').slice(0,500),src:i.url,live:true,date:i.date}));return d}
+function retrieve(q,n=3){const qt=[...new Set(tok(q))];if(!qt.length)return[];
+  return allDocs().map(d=>{const T=new Set(tok(d.tags)),Ti=new Set(tok(d.title)),B=new Set(tok(d.text));let sc=0;qt.forEach(w=>{if(T.has(w))sc+=3;if(Ti.has(w))sc+=2;if(B.has(w))sc+=1});return{...d,score:sc}}).filter(d=>d.score>0).sort((a,b)=>b.score-a.score).slice(0,n)}
+const EMERG=/chest pain|can.?t breathe|cannot breathe|trouble breathing|difficulty breathing|short(ness)? of breath|unconscious|passed out|fainted|seizure|severe bleeding|bleeding (a lot|heavily)|stroke|face droop|slurred|anaphyla|suicid|kill myself|end my life|self.?harm|want to die/i;
+function triage(q){if(!EMERG.test(q))return null;
+  if(/suicid|kill myself|end my life|self.?harm|want to die/i.test(q))return "I'm really sorry you're feeling this way. **Please contact the flight surgeon or ground behavioral-health support right now**, or tell the nearest crewmate. You do not have to carry this alone, and reaching out is the right move. I can stay with you while you do.";
+  return "**This may be an emergency.** Stop what you are doing, alert your crew, follow your mission emergency/medical procedure and **contact the flight surgeon immediately**. I can't assess this safely. When help is on the way, tell me what happened and I can help you note it down."}
+function statusSummary(){const a=analyze(S.crew),L=a.last,c=CREW.find(x=>x.id===S.crew);
+  const rows=METRICS.map(m=>{const st=metricStatus(S.crew,m.k,L[m.k]);return `• ${m.label}: ${L[m.k].toFixed(m.dec)} ${m.unit} (${SEVTXT[st].toLowerCase()})`}).join('\n');
+  const top=a.insights.filter(i=>i.sev!=='ok').slice(0,2).map(i=>'→ '+i.title+'. '+i.action).join('\n');
+  return `**${c.name}, Day ${L.day}: ${a.level}**\n${rows}\n${top||'→ No concordant changes detected. Keep your routine.'}\n(Data source: ${L.src.toLowerCase()}.)`}
+const FMT=t=>esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');
+let CHAT=[{r:'bot',t:"Hi, I'm the AETHER Assistant. Ask about your readings, spaceflight hazards, how to measure something, or what's new from NASA. I'm not a doctor, so for emergencies contact the flight surgeon.",src:[]}];
+function localAnswer(q){
+  if(/(how am i|my (status|health|readings|numbers|vitals)|how('s| is) my|am i (ok|okay|fine|healthy)|check me)/i.test(q))return{t:statusSummary(),src:[]};
+  if(/(what'?s new|latest|recent|news|updates?)\b/i.test(q)&&S.feed&&S.feed.items&&S.feed.items.length){const it=S.feed.items.slice(0,3);return{t:'**Latest from NASA sources**\n'+it.map(i=>'• '+i.title+(i.date?' ('+i.date.slice(0,10)+')':'')).join('\n'),src:it.map(i=>({t:i.title,u:i.url}))}}
+  const r=retrieve(q,3);
+  if(!r.length||r[0].score<3)return{t:"I don't have a reliable answer for that in my NASA knowledge base. Try the **Measurement Guide** or **Body & Hazards**, rephrase with a specific indicator or hazard, or ask your flight surgeon. If you connect a language model in the settings below I can try a broader answer.",src:[]};
+  const rel=r.slice(1).filter(x=>x.score>=3).map(x=>x.title);
+  return{t:`**${r[0].title}**\n${r[0].text}`+(rel.length?`\n\nRelated: ${rel.join(' · ')}`:''),src:r.filter(x=>x.score>=3).map(x=>({t:x.title,u:x.src}))}}
+async function callLLM(q,ctx){
+  const L=S.llm;let sys="You are AETHER Assistant, a spaceflight health guide for astronaut crew. Be concise, plain-language and practical. Ground answers in the CONTEXT below and say when you are unsure. Never diagnose or prescribe. For anything serious, tell the crew member to follow mission procedures and contact the flight surgeon. If a question is outside spaceflight health, say so briefly.\n\nCONTEXT:\n"+ctx.map(d=>`- ${d.title}: ${d.text}`).join('\n');
+  if(L.share){const a=analyze(S.crew);sys+="\n\nCURRENT CREW READINGS (user-approved to share):\n"+METRICS.map(m=>`${m.label}: ${a.last[m.k]} ${m.unit}`).join('; ')+`; status ${a.level}.`}
+  let msgs=CHAT.filter(m=>!m.warn).slice(-7).map(m=>({role:m.r==='user'?'user':'assistant',content:m.t.replace(/\*\*/g,'')}));while(msgs.length&&msgs[0].role!=='user')msgs.shift();
+  const ctl=new AbortController();setTimeout(()=>ctl.abort(),30000);
+  if(L.provider==='anthropic'){
+    const r=await fetch((L.endpoint||'https://api.anthropic.com')+'/v1/messages',{method:'POST',signal:ctl.signal,headers:{'content-type':'application/json','x-api-key':L.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:L.model||'claude-sonnet-5-5',max_tokens:700,system:sys,messages:msgs})});
+    const j=await r.json();if(!r.ok)throw new Error(j.error&&j.error.message||('HTTP '+r.status));return j.content.map(c=>c.text||'').join('')}
+  const base=(L.endpoint||'https://api.openai.com/v1').replace(/\/$/,'');
+  const r=await fetch(base+'/chat/completions',{method:'POST',signal:ctl.signal,headers:{'content-type':'application/json',authorization:'Bearer '+L.key},body:JSON.stringify({model:L.model||'gpt-4o-mini',max_tokens:700,messages:[{role:'system',content:sys},...msgs]})});
+  const j=await r.json();if(!r.ok)throw new Error(j.error&&j.error.message||('HTTP '+r.status));return j.choices[0].message.content}
+async function ask(q){
+  q=q.trim();if(!q)return;CHAT.push({r:'user',t:q});const t=triage(q);
+  if(t){CHAT.push({r:'bot',t,warn:1});audit('assistant emergency prompt shown');return drawChat()}
+  const ctx=retrieve(q,4),L=S.llm;
+  if(L.provider!=='off'&&L.key&&navigator.onLine){CHAT.push({r:'bot',t:'Thinking…',tmp:1});drawChat();
+    try{const a=await callLLM(q,ctx);CHAT.pop();CHAT.push({r:'bot',t:a,src:ctx.filter(x=>x.score>=3).map(x=>({t:x.title,u:x.src})),llm:1});audit('assistant LLM answer',L.share?'readings shared':'no readings shared')}
+    catch(e){CHAT.pop();const la=localAnswer(q);CHAT.push({r:'bot',t:'(Language model unavailable: '+String(e.message||e).slice(0,120)+'. Using offline knowledge base.)\n\n'+la.t,src:la.src})}
+  }else CHAT.push({r:'bot',...localAnswer(q)});
+  drawChat()}
+function drawChat(){const el=$('#chatlog');if(!el)return;
+  el.innerHTML=CHAT.map(m=>`<div class="msg ${m.r} ${m.warn?'warnmsg':''}"><div class="bub">${FMT(m.t)}${m.src&&m.src.length?`<div class="srcs">${m.src.map(s=>`<a target="_blank" rel="noopener" href="${esc(s.u)}">${esc(s.t.slice(0,60))} ↗</a>`).join('')}</div>`:''}${m.llm?'<div class="srcs"><span class="tag t-scn">AI-GENERATED · VERIFY</span></div>':''}</div></div>`).join('');el.scrollTop=el.scrollHeight}
+function vAssistant(){const L=S.llm,on=L.provider!=='off'&&L.key;
+  return `<h1>AETHER Assistant <span class="tag ${on?'t-scn':'t-live'}">${on?'LANGUAGE MODEL + KB':'OFFLINE KNOWLEDGE BASE'}</span></h1>
+  <p class="sub">Ask about your readings, hazards, measurements or NASA news. By default it answers <b>offline</b> from a NASA-referenced knowledge base (${KB.length+KB_EXTRA.length} topics + ${(S.feed&&S.feed.items&&S.feed.items.length)||0} recent NASA items). Emergency phrases always trigger a fixed safety message.</p>
+  <div class="card chat"><div id="chatlog" aria-live="polite"></div>
+   <div class="chips" id="sugg" style="margin:8px 0">${['How am I doing today?','Why does sleep matter in space?','What is SANS?','When should I contact the flight surgeon?',"What's new from NASA?"].map(x=>`<button class="btn sm" data-q="${esc(x)}">${esc(x)}</button>`).join(' ')}</div>
+   <form id="chatform" style="display:flex;gap:8px"><input id="chatin" style="flex:1" placeholder="Ask AETHER…" maxlength="500" autocomplete="off" aria-label="Message"><button class="btn pri" type="submit">Send</button></form></div>
+  <details class="card" style="margin-top:14px" ${on?'':''}><summary style="cursor:pointer;font-weight:600">Optional: connect a language model (advanced)</summary>
+   <p class="note"><b>Privacy:</b> when enabled, your prompt, recent chat messages and retrieved knowledge-base context are sent to the provider you choose${'—and your current readings only if you tick the box'}. Your API key is stored only on this device. For a fleet deployment use your own secure proxy endpoint rather than distributing a key.</p>
+   <div class="form" style="margin-top:10px">
+    <div><label>Provider</label><select id="llmp"><option value="off">Off (offline only)</option><option value="anthropic">Anthropic (Claude)</option><option value="openai">OpenAI-compatible</option></select></div>
+    <div><label>Endpoint (optional / proxy)</label><input id="llme" value="${esc(L.endpoint)}" placeholder="default provider URL"></div>
+    <div><label>Model (optional)</label><input id="llmm" value="${esc(L.model)}" placeholder="provider default"></div>
+    <div><label>API key</label><input id="llmk" type="password" value="${esc(L.key)}" autocomplete="off" spellcheck="false"></div></div>
+   <label style="display:flex;gap:8px;align-items:center;margin-top:10px;color:var(--text)"><input type="checkbox" id="llms" style="width:auto" ${L.share?'checked':''}> Include my current readings in questions</label>
+   <div style="margin-top:10px"><button class="btn pri" id="llmsave">Save</button> <button class="btn" id="chatclear">Clear chat</button></div></details>`}
+/* ===== NASA feed (live + server snapshot) ===== */
+const FEEDQ='spaceflight astronaut health';
+async function jfetch(u,ms=10000){const c=new AbortController();setTimeout(()=>c.abort(),ms);const r=await fetch(u,{signal:c.signal});if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}
+async function fetchFeed(force){
+  if(!navigator.onLine)return;
+  if(!force&&S.feed&&Date.now()-S.feed.t<6*36e5)return;
+  const items=[],status={};
+  try{const j=await jfetch('https://ntrs.nasa.gov/api/citations/search?q='+encodeURIComponent(FEEDQ)+'&page.size=20');
+    (j.results||j.hits||[]).forEach(x=>items.push({k:'research',title:String(x.title||'').replace(/<[^>]+>/g,''),summary:String(x.abstract||'').replace(/<[^>]+>/g,''),date:x.distributionDate||x.created||x.publicationDate||'',url:'https://ntrs.nasa.gov/citations/'+x.id,src:'NASA NTRS'}));status.ntrs='live'}catch(e){status.ntrs='unreachable'}
+  try{const j=await jfetch('https://images-api.nasa.gov/search?q='+encodeURIComponent('astronaut health exercise')+'&media_type=image&page_size=10');
+    ((j.collection||{}).items||[]).forEach(x=>{const d=(x.data||[])[0]||{};items.push({k:'media',title:d.title||'',summary:d.description||'',date:d.date_created||'',url:'https://images.nasa.gov/details/'+d.nasa_id,src:'NASA Image Library'})});status.img='live'}catch(e){status.img='unreachable'}
+  if(!items.length){try{const j=await jfetch('feed-snapshot.json');(j.items||[]).forEach(i=>items.push(i));status.snapshot='from server '+(j.updated||'')}catch(e){status.snapshot='unavailable'}}
+  if(items.length){items.sort((a,b)=>(b.date||'').localeCompare(a.date||''));S.feed={t:Date.now(),items:items.filter(i=>i.title).slice(0,40),status};save()}
+  else if(S.feed){S.feed.status=status;save()}else S.feed={t:Date.now(),items:[],status};
+  if(S.view==='updates'||S.view==='assistant')render()}
+async function loadPack(){try{const j=await jfetch('knowledge.json?'+Date.now(),6000);KB_EXTRA=j.entries||[];S.pack={v:j.version,u:j.updated};save()}catch(e){}}
+function vUpdates(){const F=S.feed,st=F&&F.status||{};
+  const tagc=x=>x==='live'?'<span class="tag t-live">LIVE</span>':x&&x.startsWith('from server')?'<span class="tag t-man">SERVER SNAPSHOT</span>':'<span class="tag t-scn">'+(x||'—').toUpperCase()+'</span>';
+  const items=(F&&F.items||[]).map(i=>`<div class="insight info"><h3><a style="color:var(--text)" target="_blank" rel="noopener" href="${esc(i.url)}">${esc(i.title)}</a></h3><p>${esc((i.summary||'').slice(0,260))}${(i.summary||'').length>260?'…':''}</p><div class="meta">${esc(i.src||'NASA')} · ${esc((i.date||'').slice(0,10))} · ${i.k==='media'?'media library':'research report'}</div></div>`).join('');
+  return `<h1>NASA Updates</h1><p class="sub">Recent NASA research and media on astronaut health, fetched when you are online and cached for offline reading. The assistant also uses these items when answering.</p>
+  <div class="grid g3" style="margin-bottom:14px"><div class="card"><h2>Sources</h2><p>NASA Technical Reports ${tagc(st.ntrs)}</p><p>NASA Image Library ${tagc(st.img)}</p><p>Space weather (DONKI) ${SW.status==='live'?tagc('live'):tagc('unreachable')}</p>${st.snapshot?`<p>Fallback snapshot ${tagc(st.snapshot)}</p>`:''}</div>
+   <div class="card"><h2>Freshness</h2><p>Last refresh: <b>${F?new Date(F.t).toLocaleString():'never'}</b></p><p>Knowledge pack: <b>${S.pack?('v'+S.pack.v+' · '+S.pack.u):'built-in'}</b></p><button class="btn pri" id="feedRefresh" style="margin-top:8px">Refresh now</button></div>
+   <div class="card"><h2>Official hubs</h2><p><a class="cy" target="_blank" rel="noopener" href="https://www.nasa.gov/hrp/hazards/">HRP hazards</a><br><a class="cy" target="_blank" rel="noopener" href="https://www.nasa.gov/hrp/risks/">HRP risks</a><br><a class="cy" target="_blank" rel="noopener" href="https://www.nasa.gov/hrp/ongoing-hrp-research/">Ongoing HRP research</a><br><a class="cy" target="_blank" rel="noopener" href="https://osdr.nasa.gov/">NASA OSDR</a></p></div></div>
+  ${items||'<div class="card alert-amber"><p>No items yet. Connect to the internet and press Refresh.</p></div>'}
+  <p class="note">Items are search results from NASA services, shown unreviewed. They are not medical guidance. Verify with official NASA sources.</p>`}
+
+/* ========================= CONTROLLER ========================= */
+function render(){
+  const v=S.view||'overview';
+  $('#nav').innerHTML=VIEWS.map(x=>`<button data-v="${x.id}" ${x.id===v?'aria-current="page"':''} class="${x.id===v?'on':''}"><span class="n">${String(VIEWS.indexOf(x)+1).padStart(2,'0')}</span>${x.label}</button>`).join('');
+  $('#mday').textContent='DAY '+missionDay();
+  $('#view').innerHTML=({overview:vOverview,health:vHealth,env:vEnv,intel:vIntel,guide:vGuide,assistant:vAssistant,updates:vUpdates,settings:vSettings,body:vBody,routine:vRoutine,med:vMed,about:vAbout}[v]||vOverview)();
+  $$('#roleSeg button').forEach(b=>b.classList.toggle('on',b.dataset.r===S.role));
+  $('#crewSel').value=S.crew;
+  bind();
+}
+function go(v){S.view=v;save();render();$('#view').scrollTop=0}
+function bind(){
+  $$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+  $$('[data-crew]').forEach(b=>b.onclick=()=>{S.crew=b.dataset.crew;save();render()});
+  const scn=$('#scn');if(scn)scn.onclick=runScenario;
+  const ci=$('#ci');if(ci)ci.onsubmit=e=>{e.preventDefault();const f=new FormData(ci),vals={};METRICS.forEach(m=>vals[m.k]=parseFloat(f.get(m.k)));
+    const day=missionDay()+1;const env=envSeries().slice(-1)[0];
+    S.entries.push({crew:S.crew,day,vals,src:'MANUAL',note:f.get('note')||'',ts:Date.now()});
+    S.envEntries.push({day,vals:{co2:env.co2,rad:env.rad,cabT:env.cabT,rh:env.rh},src:'SIM',ts:Date.now()});
+    if(!navigator.onLine)S.queue++;
+    const k=S.crew+':'+day;S.tasks[k]=S.tasks[k]||{};
+    audit('check-in saved','Day '+day);save();toast('Check-in saved locally'+(navigator.onLine?'':' while offline'));go('intel')};
+  $$('#exJSON').forEach(b=>b.onclick=()=>{audit('export JSON');download('aether-export.json',JSON.stringify({generated:new Date().toISOString(),note:'SIMULATED + MANUAL data; not clinical',crew:CREW,sim:SIM,entries:S.entries,envEntries:S.envEntries,audit:S.audit},null,1),'application/json')});
+  $$('#exCSV').forEach(b=>b.onclick=()=>{audit('export CSV');const rows=['crew,day,source,'+METRICS.map(m=>m.k).join(',')];CREW.forEach(c=>series(c.id).forEach(r=>rows.push([c.id,r.day,r.src,...METRICS.map(m=>r[m.k])].join(','))));download('aether-export.csv',rows.join('\n'),'text/csv')});
+  const pdf=$('#exPDF');if(pdf)pdf.onclick=()=>{audit('print report');window.print()};
+  $$('[data-ack]').forEach(b=>b.onclick=()=>{S.acks[b.dataset.ack]={by:'Flight Surgeon',t:Date.now()};audit('acknowledged',b.dataset.ack);toast('Acknowledged');render()});
+  $$('[data-task]').forEach(b=>b.onclick=()=>{const k=S.crew+':'+missionDay();S.tasks[k]=S.tasks[k]||{};const id=b.dataset.task,t=TASKS.find(x=>x.id===id);
+    if(S.tasks[k][id]){delete S.tasks[k][id];S.xp[S.crew]=Math.max(0,(S.xp[S.crew]||0)-t.xp)}else{S.tasks[k][id]=1;S.xp[S.crew]=(S.xp[S.crew]||0)+t.xp}save();render()});
+  $$('.body-svg .part').forEach(p=>p.onclick=()=>{$$('.body-svg .part').forEach(x=>x.classList.remove('on'));p.classList.add('on');const d=BODY[p.dataset.p];
+    $('#bodyInfo').innerHTML=`<h2>${d.t}</h2><h1 style="font-size:19px;margin-bottom:8px">${d.h}</h1><p style="color:#c4d3ee">${d.d}</p>
+     <p style="margin-top:10px"><span class="tag t-ref">HAZARD</span> ${d.hz}</p><div class="chips" style="margin-top:8px"><b style="font-size:12px;color:var(--muted)">AETHER monitors:</b> ${d.m.map(x=>`<span>${x}</span>`).join('')}</div>
+     <p style="margin-top:10px"><a class="cy" target="_blank" rel="noopener" href="${d.link}">NASA reference ↗</a></p>`});
+  const sk=$('#saveKey');if(sk)sk.onclick=()=>{S.apiKey=$('#apikey').value.trim();save();SW.status='pending';renderSW();fetchSW();toast('Key saved')};
+  const wp=$('#wipe');if(wp)wp.onclick=()=>{if(confirm('Delete ALL local AETHER data on this device? This cannot be undone.')){const c=S.consent;localStorage.removeItem(KEY);S=load();S.consent=c;save();toast('Local data deleted');render()}};
+  const rc=$('#reconsent');if(rc)rc.onclick=showGate;
+  const cf=$('#chatform');if(cf){drawChat();cf.onsubmit=e=>{e.preventDefault();const i=$('#chatin');const v=i.value;i.value='';ask(v)};$$('#sugg [data-q]').forEach(b=>b.onclick=()=>ask(b.dataset.q));
+    $('#llmp').value=S.llm.provider;$('#llmsave').onclick=()=>{S.llm={provider:$('#llmp').value,endpoint:$('#llme').value.trim(),model:$('#llmm').value.trim(),key:$('#llmk').value.trim(),share:$('#llms').checked};save();audit('assistant settings saved',S.llm.provider);toast('Saved');render()};$('#chatclear').onclick=()=>{CHAT.length=1;drawChat()}}
+  const fr=$('#feedRefresh');if(fr)fr.onclick=()=>{toast('Refreshing…');fetchFeed(true)};
+  const r=$('#retrySW');if(r)r.onclick=()=>{SW.status='pending';renderSW();fetchSW()};
+}
+function runScenario(){
+  const day=missionDay()+1, last=series(S.crew).slice(-1)[0];
+  const b=k=>baselineStats(S.crew,k).m;
+  const vals={hr:b('hr')+5,sbp:b('sbp')+7,sleep:4.4,temp:b('temp')+.1,mood:2.3,glu:b('glu')+9,act:55};
+  S.entries.push({crew:S.crew,day,vals,src:'SCENARIO',ts:Date.now()});
+  S.envEntries.push({day,vals:{co2:4.6,rad:21,cabT:23.4,rh:41},src:'SCENARIO',ts:Date.now()});
+  audit('demo scenario','Day '+day+' sleep-loss + CO₂ rise');toast('Demo scenario injected — see Health Intelligence');go('intel');
+}
+function resetAll(){if(confirm('Reset all local AETHER data?')){localStorage.removeItem(KEY);S=load();render()}}
+
+/* ========================= INIT ========================= */
+$('#crewSel').innerHTML=CREW.map(c=>`<option value="${c.id}">${c.name} · ${c.role}</option>`).join('');
+$('#crewSel').onchange=e=>{S.crew=e.target.value;save();render()};
+if(!S.env)S.env='station';
+$('#envSel').innerHTML=Object.entries(ENVPROF).map(([k,v])=>`<option value="${k}">${v.n}</option>`).join('');
+$('#envSel').value=S.env;
+$('#envSel').onchange=e=>{S.env=e.target.value;audit('environment',S.env);render()};
+$('#nav').onclick=e=>{const b=e.target.closest('button');if(b)go(b.dataset.v)};
+$('#roleSeg').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.role=b.dataset.r;audit('role switch',S.role);if(S.role==='medical')S.view='med';save();render()};
+let lastOnline=navigator.onLine;
+function net(){const on=navigator.onLine;$('#netdot').classList.toggle('off',!on);$('#nettxt').textContent=on?'LINK NOMINAL':'OFFLINE · local mode';if(on&&!lastOnline&&S.queue){toast('Browser connection restored. Offline entries remain saved on this device; no server sync is configured.')}lastOnline=on}
+addEventListener('online',()=>{net();fetchSW()});addEventListener('offline',net);net();
+setInterval(()=>{$('#clock').textContent=new Date().toISOString().slice(11,19)+' UTC'},1000);
+$('#clock').textContent=new Date().toISOString().slice(11,19)+' UTC';
+// reset shortcut: Shift+R long-press not needed; expose via console / footer
+window.aetherReset=resetAll;
+// star field
+(function(){const c=$('#stars'),x=c.getContext('2d');let st=[];function size(){c.width=innerWidth;c.height=innerHeight;st=Array.from({length:140},()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.2+.2,p:Math.random()*6}))}
+ function tick(t){x.clearRect(0,0,c.width,c.height);st.forEach(s=>{x.globalAlpha=.35+.35*Math.sin(t/1200+s.p);x.fillStyle='#bfe9ff';x.beginPath();x.arc(s.x,s.y,s.r,0,6.3);x.fill()});requestAnimationFrame(tick)}
+ size();addEventListener('resize',size);if(!matchMedia('(prefers-reduced-motion: reduce)').matches)requestAnimationFrame(tick)})();
+function showGate(){const g=$('#gate');g.style.display='flex';$('#gateck').checked=false;$('#gatebtn').disabled=true;$('#gateck').focus()}
+$('#gateck').onchange=e=>$('#gatebtn').disabled=!e.target.checked;
+$('#gatebtn').onclick=()=>{S.consent=Date.now();audit('safety notice accepted',APP_VERSION);$('#gate').style.display='none';$('#view').focus()};
+$('#view').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.task,.part')){e.preventDefault();e.target.click()}});
+if(!S.consent)showGate();
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+render();renderSW();fetchSW();fetchFeed();loadPack();
+</script>
+</body>
+</html>
