@@ -73,7 +73,7 @@ Not implemented: validated clinical algorithms, real wearable/ECLSS connections,
 
 ## Challenge submission
 
-See [`docs/SUBMISSION.md`](docs/SUBMISSION.md) for the project summary, problem framing, innovation, current limitations and suggested live-demo sequence.
+See [`docs/SUBMISSION.md`](docs/SUBMISSION.md) for the project summary, problem framing, innovation, current limitations and suggested live-demo sequence. Manual browser smoke-test instructions are in [`tests/README.md`](tests/README.md).
 
 ## Project structure
 
